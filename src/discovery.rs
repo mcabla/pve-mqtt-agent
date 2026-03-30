@@ -9,7 +9,7 @@ use crate::{
     ha_discovery::Device,
     proxmox::GuestRef,
     publisher as pub_module,
-    topic::GuestType,
+    topic::{Action, GuestType},
 };
 
 type GuestMap = HashMap<(GuestType, NonZeroU32), GuestRef>;
@@ -40,12 +40,62 @@ pub async fn publish_guest_discovery(cfg: &RootConfig, client: &AsyncClient, gue
     let unique_base = format!("{}_{}", type_str, vmid);
 
     // Publish button discovery
+    let reboot_button = pub_module::ButtonConfig {
+        name: "Reboot",
+        unique_id: &format!("{}_reboot", unique_base),
+        guest_type_segment: type_str,
+        action: Action::Reboot,
+    };
     pub_module::publish_button_discovery(
         client,
         cfg,
         vmid,
-        "Reboot",
-        &format!("{}_reboot", unique_base),
+        &reboot_button,
+        &dev,
+    )
+    .await;
+
+    let start_button = pub_module::ButtonConfig {
+        name: "Start",
+        unique_id: &format!("{}_start", unique_base),
+        guest_type_segment: type_str,
+        action: Action::Start,
+    };
+    pub_module::publish_button_discovery(
+        client,
+        cfg,
+        vmid,
+        &start_button,
+        &dev,
+    )
+    .await;
+
+    let stop_button = pub_module::ButtonConfig {
+        name: "Stop",
+        unique_id: &format!("{}_stop", unique_base),
+        guest_type_segment: type_str,
+        action: Action::Stop,
+    };
+    pub_module::publish_button_discovery(
+        client,
+        cfg,
+        vmid,
+        &stop_button,
+        &dev,
+    )
+    .await;
+
+    let shutdown_button = pub_module::ButtonConfig {
+        name: "Shutdown",
+        unique_id: &format!("{}_shutdown", unique_base),
+        guest_type_segment: type_str,
+        action: Action::Shutdown,
+    };
+    pub_module::publish_button_discovery(
+        client,
+        cfg,
+        vmid,
+        &shutdown_button,
         &dev,
     )
     .await;

@@ -210,6 +210,19 @@ Allowed actions:
 3. `shutdown`
 4. `reboot`
 
+Action behavior (important):
+
+1. `start`: Power on a stopped guest.
+2. `shutdown`: Graceful shutdown request to the guest OS (preferred for normal power-off).
+3. `stop`: Forced power-off (hard stop). Use only when graceful shutdown is stuck or not possible.
+4. `reboot`: Restart request. In normal cases this is graceful; if the guest does not respond, behavior can become effectively hard depending on guest/host settings.
+
+Recommended usage order:
+
+1. Prefer `shutdown` over `stop` for routine operations.
+2. Use `stop` as an emergency action.
+3. Use `reboot` for planned restarts.
+
 Example:
 
 ```text

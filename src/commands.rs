@@ -38,12 +38,24 @@ pub async fn handle_command(
         return Ok(());
     };
 
-    // For reboot, ensure guest is running and mark as pending
-    if cmd.action == Action::Reboot {
-        let st = pve.guest_status(g).await?;
-        if st.status != "running" {
+    // Enforce action preconditions to avoid unnecessary/no-op API calls.
+    let st = pve.guest_status(g).await?;
+    let is_running = st.status == "running";
+
+    match cmd.action {
+        Action::Start if is_running => {
             let msg = format!(
-                "Refused reboot: guest not running ({} {}): {}",
+                "Refused start: guest already running ({} {})",
+                g.guest_type.api_segment(),
+                g.vmid.get()
+            );
+            pub_module::publish_alert(client, &cfg.mqtt.alert_topic, &msg).await?;
+            return Ok(());
+        }
+        Action::Stop | Action::Shutdown | Action::Reboot if !is_running => {
+            let msg = format!(
+                "Refused {}: guest not running ({} {}): {}",
+                cmd.action.api_segment(),
                 g.guest_type.api_segment(),
                 g.vmid.get(),
                 st.status
@@ -51,8 +63,11 @@ pub async fn handle_command(
             pub_module::publish_alert(client, &cfg.mqtt.alert_topic, &msg).await?;
             return Ok(());
         }
+        _ => {}
+    }
 
-        // Mark reboot as pending for UI feedback
+    // For reboot, mark action as pending for UI feedback and reboot detection.
+    if cmd.action == Action::Reboot {
         let mut state_mgr = state.lock().await;
         state_mgr.add_pending_action(
             (cmd.guest_type, cmd.vmid),

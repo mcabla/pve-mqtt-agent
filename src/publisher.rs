@@ -8,6 +8,7 @@ use anyhow::{Result, Context};
 use crate::{
     config::RootConfig,
     ha_discovery::{Device, MqttButtonConfig, MqttSensorConfig},
+    topic::Action,
 };
 
 /// Sensor discovery configuration builder.
@@ -19,6 +20,15 @@ pub struct SensorConfig<'a> {
     pub unit_of_measurement: Option<&'a str>,
     pub device_class: Option<&'a str>,
     pub icon: Option<&'a str>,
+}
+
+/// Button discovery configuration builder.
+#[derive(Clone)]
+pub struct ButtonConfig<'a> {
+    pub name: &'a str,
+    pub unique_id: &'a str,
+    pub guest_type_segment: &'a str,
+    pub action: Action,
 }
 
 /// Publish a serializable payload to MQTT topic with error logging.
@@ -139,21 +149,21 @@ pub async fn publish_button_discovery(
     client: &AsyncClient,
     cfg: &RootConfig,
     vmid: u32,
-    button_name: &str,
-    unique_id: &str,
+    button: &ButtonConfig<'_>,
     device: &Device,
 ) {
-    let uid = format!("pve_{unique_id}");
+    let uid = format!("pve_{}", button.unique_id);
     let btn_topic = crate::ha_discovery::discovery_button_topic(&cfg.mqtt.discovery_prefix, &uid);
 
-    let button = MqttButtonConfig {
-        name: button_name.to_string(),
+    let button_cfg = MqttButtonConfig {
+        name: button.name.to_string(),
         unique_id: uid,
         command_topic: format!(
-            "{}/cmd/{}/{}",
+            "{}/cmd/{}/{}/{}",
             cfg.mqtt.topic_prefix,
-            unique_id.split('_').next().unwrap_or("unknown"),
-            vmid
+            button.guest_type_segment,
+            vmid,
+            button.action.api_segment()
         ),
         payload_press: "1".to_string(),
         availability_topic: cfg.mqtt.availability_topic.clone(),
@@ -161,7 +171,7 @@ pub async fn publish_button_discovery(
         entity_category: Some("config".to_string()),
     };
 
-    if let Err(e) = publish_json(client, &btn_topic, &button, button_name, vmid).await {
-        warn!(vmid, button = button_name, error = ?e, "failed to publish button discovery");
+    if let Err(e) = publish_json(client, &btn_topic, &button_cfg, button.name, vmid).await {
+        warn!(vmid, button = button.name, error = ?e, "failed to publish button discovery");
     }
 }
