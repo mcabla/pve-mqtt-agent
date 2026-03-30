@@ -1,0 +1,36 @@
+[agent]
+poll_interval_secs = 15
+publish_discovery = true
+action_timeout_secs = 180
+reboot_detect_window_secs = 120
+reboot_uptime_drop_secs = 10
+
+[mqtt]
+host = "192.168.x.y"
+port = 1883
+client_id = "pve-agent-01"
+username = "uniqueusername"
+password = "strongpassword"
+# TLS (PEM)
+use_tls = false
+#ca_file = "/etc/pve-mqtt-agent/mqtt/ca.pem"
+#client_cert_file = "/etc/pve-mqtt-agent/mqtt/client.crt"
+#client_key_file = "/etc/pve-mqtt-agent/mqtt/client.key"
+
+# Topics
+topic_prefix = "proxmox/ha"
+discovery_prefix = "homeassistant"
+availability_topic = "proxmox/ha/availability"
+alert_topic = "proxmox/ha/alert"
+
+[proxmox]
+# Prefer a stable cert (ACME or internal CA) so upgrades don't break TLS validation.
+base_url = "https://192.168.v.w:8006"
+# Format: USER@REALM!TOKENID  (secret stored separately below)
+token_id = "USER@REALM!TOKENID"
+token_secret = "supersecrettoken"
+pool = "ha-mqtt"
+timeout_secs = 10
+
+# Optional custom CA bundle if Proxmox uses internal CA
+#ca_file = "/etc/pve-mqtt-agent/proxmox/ca.pem"

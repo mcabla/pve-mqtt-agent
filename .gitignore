@@ -1,0 +1,41 @@
+# Build artifacts
+/target/
+*.o
+*.a
+*.so
+*.dylib
+*.rlib
+
+# Cargo
+Cargo.lock
+
+# IDE/Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.iml
+
+# Configuration files (CRITICAL - contains secrets)
+config.toml
+
+# PEM certificate and key files
+*.pem
+*.crt
+*.key
+*.p12
+*.pfx
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+
+# OS files
+Thumbs.db
+.DS_Store
